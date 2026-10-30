@@ -8,9 +8,10 @@ Uso:
 
 No corpo, {{MEDICO}} vira o nome de quem assina ("de {{MEDICO}}" vira "da Dra. ..." ou "do Dr. ...") e <!--assinatura--> vira a linha de assinatura.
 Saídas: o PDF e, ao lado, o HTML completo (abre no navegador e imprime com Cmd+P).
-Códigos de saída: 0 ok · 2 sem navegador compatível (o HTML fica pronto) · 3 perfil ou argumento inválido · 4 a impressão falhou.
+Códigos de saída: 0 ok · 2 sem navegador compatível (o HTML fica pronto) · 3 perfil, argumento ou corpo inválido · 4 a impressão falhou.
 """
 import argparse, base64, html, json, os, re, shutil, subprocess, sys, tempfile, time
+from html.parser import HTMLParser
 from pathlib import Path
 
 SKILL = Path(__file__).resolve().parent.parent
@@ -49,10 +50,37 @@ def pilha(nome, reserva):
 
 def texto_css(s):
     """Texto dentro de content: "..." no CSS."""
-    return re.sub(r"\s+", " ", s).replace("\\", "\\\\").replace('"', '\\"')
+    return re.sub(r"\s+", " ", s).replace("\\", "\\\\").replace('"', '\\"').replace("<", "\\3c ")
 
 
-assert texto_css('Dr. "X" \\ a\nb') == 'Dr. \\"X\\" \\\\ a b'
+assert texto_css('Dr. "X" \\ a\nb</style>') == 'Dr. \\"X\\" \\\\ a b\\3c /style>'
+
+PROIBIDAS = {"script", "meta", "link", "base", "iframe", "frame", "frameset", "object", "embed", "form"}
+
+
+class Conferencia(HTMLParser):
+    """Acha no corpo o que roda código ou chama a rede; meta refresh e link escapam da CSP do modelo."""
+    def __init__(self):
+        super().__init__()
+        self.achados = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag in PROIBIDAS:
+            self.achados.append(f"<{tag}>")
+        for k, v in attrs:
+            if k.startswith("on") or re.sub(r"[\x00-\x20]", "", v or "").lower().startswith("javascript:"):
+                self.achados.append(f"{k}=")
+
+
+def proibidos(corpo):
+    c = Conferencia()
+    c.feed(corpo)
+    c.close()
+    return c.achados
+
+
+assert proibidos('<p onclick="x">a</p><META http-equiv=refresh content="0;url=http://x"><a href=" java\tscript:1">b</a>') == ["onclick=", "<meta>", "href="]
+assert proibidos('<table class="itens"><tr><td><strong>a</strong></td></tr></table>') == []
 
 
 def contracao(nome):
@@ -140,6 +168,9 @@ def main():
         corpo = a.corpo.read_text(encoding="utf-8")
     else:
         falha("informe o arquivo do corpo do guia (ou --exemplo)")
+    if achados := proibidos(corpo):
+        falha("o corpo tem marcação que o guia não usa e que pode rodar código ou chamar a internet: "
+              + ", ".join(dict.fromkeys(achados)) + ". Tire e gere de novo; o que vem do laudo entra como texto, nunca como HTML")
     if "<!--assinatura-->" not in corpo:
         print("aviso: o corpo não tem <!--assinatura-->; a assinatura do perfil não foi inserida", file=sys.stderr)
     partes = [f"<strong>{html.escape(medico['nome'])}</strong>"] + [html.escape(medico[k]) for k in ("especialidade", "crm", "rqe") if medico.get(k)]
