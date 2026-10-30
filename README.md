@@ -41,3 +41,7 @@ A skill vem com os critérios da Dra. Luma (faixas do IAH, latência REM, satura
 O laudo é lido pelo Claude dentro da sua sessão, e os arquivos ficam no seu computador, na pasta que você escolher. A skill nunca envia nada ao paciente: o envio é seu. Guarde e compartilhe os guias como faria com qualquer documento do prontuário.
 
 Para você poder reeditar um guia, a subpasta oculta `.trabalho/`, dentro da pasta dos guias, guarda o texto extraído do laudo, recortes das páginas e o corpo de cada guia. É dado do paciente como o próprio guia: apague quando não precisar mais.
+
+## Licença
+
+Apache 2.0 (arquivo `LICENSE`). Quem copiar, adaptar ou redistribuir a skill deve manter o arquivo `NOTICE`, com o crédito do método à Dra. Luma Costa, e indicar nos arquivos o que mudou.
