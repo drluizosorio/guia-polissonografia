@@ -4,6 +4,10 @@ Skill do Claude Code que lê o laudo de polissonografia do seu paciente e gera u
 
 **Método de leitura e critérios:** Dra. Luma Costa, otorrinolaringologista.
 
+## Aviso
+
+Esta skill ajuda a explicar ao paciente um laudo de polissonografia já emitido; não faz diagnóstico nem indica tratamento. Cada guia deve ser revisado e assinado pelo médico responsável, que responde por ele. Não há garantia sobre os resultados nem sobre conformidade com normas clínicas ou de privacidade. Respeite a recusa do paciente ao uso de inteligência artificial.
+
 ## O que precisa
 
 - Claude Code instalado.
